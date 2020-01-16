@@ -10,12 +10,13 @@ set address=%fillname:~0,6%%Asum:~0,2%
 del /Q sciledger\address.tmp
 
 :action
-set /p action=check/redownload/send/node/info 
+set /p action=check/redownload/send/info/node/nodereset 
 if "%action%"=="check" (goto scan)
 if "%action%"=="redownload" (goto redownload)
 if "%action%"=="send" (goto send)
 if "%action%"=="info" (echo address: %address%)
 if "%action%"=="node" (goto nodestart)
+if "%action%"=="nodereset" (goto nodereset)
 goto action
 
 :redownload
@@ -54,8 +55,8 @@ goto action
 
 :send
 if not exist P:\sciledger\ ( mkdir P:\sciledger )
-set /p who=to who?
-set /p much=how much?
+set /p who=to who? 
+set /p much=how much? 
 
 echo %who:~0,6%>sciledger\address.tmp
 FOR /F "tokens=* skip=1" %%g IN ('certutil -hashfile "sciledger\address.tmp" MD2') do (SET Asum=%%g && goto SAsumbrek)
