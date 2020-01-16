@@ -63,18 +63,19 @@ FOR /F "tokens=* skip=1" %%g IN ('certutil -hashfile "sciledger\address.tmp" MD2
 del /Q sciledger\address.tmp
 if not "%who:~6,2%"=="%Asum:~0,2%" ( echo transaction canceled because address was invalid, check for mistakes and try again && goto action )
 
-set who=%who:~0,6%%Asum:~6,2%
+set who=%who:~0,6%%Asum:~0,2%
 
 set point=0
 :Ppoint
 set /A point=%point%+1
 if exist "P:\sciledger\transaction%point%.txt" (goto Ppoint)
 echo %address%%who% %much%
-echo %address%%who% %much% > "P:\sciledger\transaction%point%.txt"
 set /A Hpoint=%point%-1
 FOR /F "tokens=* skip=1" %%g IN ('certutil -hashfile "P:\sciledger\transaction%Hpoint%.txt" MD2') do (SET Shash=%%g && goto sendbrek)
 :sendbrek
+echo %address%%who% %much% > "P:\sciledger\transaction%point%.txt"
 echo %Shash%>"P:\sciledger\transaction%point%.MD2"
+echo %Shash%>>"P:\sciledger\transaction%point%.txt"
 goto action
 
 :nodestart
