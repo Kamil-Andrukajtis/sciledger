@@ -78,16 +78,22 @@ echo %Shash%>"P:\sciledger\transaction%point%.MD2"
 goto action
 
 :nodestart
+set uploaded=0
 set cycles=0
+set trustedtime=60
 :node
 set point=1
 set /A cycles=%cycles%+1
+set /A trustedtime=%trustedtime%+1
+if %trustedtime% LSS 5 ( set trustedtime=5 )
+if %trustedtime% GTR 600 ( set trustedtime=600 )
+set /A waittime=%trustedtime%+(%RANDOM%*5/32768)
 :renode
 if not exist "sciledgernode\" ( mkdir sciledgernode )
 if %cycles%==3 (set cycles=0 && goto selfnode)
 if not exist "P:\sciledger\" ( mkdir P:\sciledger && echo 00000000andrew00 10000>P:\sciledger\transaction0.txt && goto node)
 if not exist "P:\sciledger\transaction0.txt" ( echo 00000000andrew00 10000>P:\sciledger\transaction0.txt && goto node)
-if exist "P:\sciledger\transaction%point%.txt" ( set /p transaction=<P:\sciledger\transaction%point%.txt ) else ( timeout 60 && goto node)
+if exist "P:\sciledger\transaction%point%.txt" ( set /p transaction=<P:\sciledger\transaction%point%.txt ) else ( timeout %waittime% && goto node)
 
 if %transaction:~17% LEQ 0 ( del /Q "P:\sciledger\transaction%point%.*" && goto renode )
 set /A Hpoint=%point%-1
@@ -96,14 +102,16 @@ set /A Opoint=%point%-10
 if exist "P:\sciledger\transaction%Hpoint%.txt" ( FOR /F "tokens=* skip=1" %%g IN ('certutil -hashfile "P:\sciledger\transaction%Hpoint%.txt" MD2') do (SET Rhash=%%g && goto nodebrek) )
 :nodebrek
 if exist "P:\sciledger\transaction%point%.MD2" ( set /p Thash=<P:\sciledger\transaction%point%.MD2 ) else ( del /Q P:\sciledger\transaction%point%.* )
-if not "%Thash:~0,32%"=="%Rhash:~0,32%" ( if not exist "sciledgernode\transaction%Hpoint%.txt" ( del /Q P:\sciledger\transaction%point%.* && del /Q P:\sciledger\transaction%Hpoint%.* ) else ( if exist sciledgernode\transaction%Hpoint%.txt ( type sciledgernode\transaction%Hpoint%.txt>P:\sciledger\transaction%Hpoint%.txt && type sciledgernode\transaction%point%.MD2>P:\sciledger\transaction%point%.MD2 ) ) )
+if not "%Thash:~0,32%"=="%Rhash:~0,32%" ( echo hashes don't match && set /A trustedtime=%trustedtime%-10 && if not exist "sciledgernode\transaction%Hpoint%.txt" ( del /Q P:\sciledger\transaction%point%.* && del /Q P:\sciledger\transaction%Hpoint%.* ) else ( if exist sciledgernode\transaction%Hpoint%.txt ( type sciledgernode\transaction%Hpoint%.txt>P:\sciledger\transaction%Hpoint%.txt && type sciledgernode\transaction%point%.MD2>P:\sciledger\transaction%point%.MD2 ) ) )
 if exist "P:\sciledger\transaction%Opoint%.txt" ( if not exist sciledgernode\transaction%Opoint%.txt ( copy "P:\sciledger\transaction%Opoint%.txt" sciledgernode\ ) )
 if exist "P:\sciledger\transaction%Opoint%.MD2" ( if not exist sciledgernode\transaction%Opoint%.MD2 ( copy "P:\sciledger\transaction%Opoint%.MD2" sciledgernode\ ) )
+
 set /A point=%point%+1
+
 goto renode
 
 :selfnode
-echo checking rebuild need
+echo checking self
 set point=1
 :selfnodeloop
 if exist "sciledgernode\transaction%point%.txt" ( set /p transaction=<sciledgernode\transaction%point%.txt ) else ( goto node )
@@ -113,10 +121,16 @@ set /A Hpoint=%point%-1
 if exist "sciledgernode\transaction%Hpoint%.txt" ( FOR /F "tokens=* skip=1" %%g IN ('certutil -hashfile "sciledgernode\transaction%Hpoint%.txt" MD2') do (SET Rhash=%%g && goto selfnodebrek) )
 :selfnodebrek
 if exist "sciledgernode\transaction%point%.MD2" ( set /p Thash=<sciledgernode\transaction%point%.MD2 ) else ( del /Q sciledgernode\transaction%point%.* )
-if not "%Thash:~0,32%"=="%Rhash:~0,32%" ( del /Q sciledgernode\transaction%point%.* && del /Q sciledgernode\transaction%Hpoint%.* ) else ( if not exist "P:\sciledger\transaction%Hpoint%.txt" ( type sciledgernode\transaction%Hpoint%.txt>"P:\sciledger\transaction%Hpoint%.txt" && type sciledgernode\transaction%point%.MD2>"P:\sciledger\transaction%point%.MD2" ) )
+if not "%Thash:~0,32%"=="%Rhash:~0,32%" ( del /Q sciledgernode\transaction%point%.* && del /Q sciledgernode\transaction%Hpoint%.* ) else ( if not exist "P:\sciledger\transaction%Hpoint%.txt" ( type sciledgernode\transaction%Hpoint%.txt>"P:\sciledger\transaction%Hpoint%.txt" && type sciledgernode\transaction%point%.MD2>"P:\sciledger\transaction%point%.MD2" && echo transaction reuploaded ) )
 
 set /A point=%point%+1
-if exist "sciledger\transaction%point%.txt" ( goto selfnodeloop ) else ( goto selfnodedone )
+
+if exist "sciledgernode\transaction%point%.txt" ( goto selfnodeloop ) else ( set /A uploaded=%point%+1 && goto selfnodedone )
 :selfnodedone
 
 goto node
+
+
+:nodereset
+del /Q sciledgernode\*
+goto action
