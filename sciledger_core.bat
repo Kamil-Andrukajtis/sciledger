@@ -1,7 +1,13 @@
 @echo off
 
-set filledname=%USERNAME%00000000
-set address=%filledname:~0,8%
+if not exist "sciledger\" ( mkdir sciledger )
+set fillname=%USERNAME%000000
+echo %fillname:~0,6%>sciledger\address.tmp
+FOR /F "tokens=* skip=1" %%g IN ('certutil -hashfile "sciledger\address.tmp" MD2') do (SET Asum=%%g && goto CAsumbrek)
+:CAsumbrek
+set address=%fillname:~0,6%%Asum:~0,2%
+
+del /Q sciledger\address.tmp
 
 :action
 set /p action=check/redownload/send/node/info 
@@ -51,8 +57,13 @@ if not exist P:\sciledger\ ( mkdir P:\sciledger )
 set /p who=to who?
 set /p much=how much?
 
-set who=%who%00000000
-set who=%who:~0,8%
+echo %who:~0,6%>sciledger\address.tmp
+FOR /F "tokens=* skip=1" %%g IN ('certutil -hashfile "sciledger\address.tmp" MD2') do (SET Asum=%%g && goto SAsumbrek)
+:SAsumbrek
+del /Q sciledger\address.tmp
+if not "%who:~6,2%"=="%Asum:~0,2%" ( echo transaction canceled because address was invalid, check for mistakes and try again && goto action )
+
+set who=%who:~0,6%%Asum:~6,2%
 
 set point=0
 :Ppoint
