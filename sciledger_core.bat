@@ -104,8 +104,8 @@ attrib /s /d P:\sciledger -h
 attrib /s /d P:\sciledger\* -h
 if not exist "sciledgernode\" ( mkdir sciledgernode )
 if %cycles%==3 (set cycles=0 && goto selfnode)
-if not exist "P:\sciledger\" ( mkdir P:\sciledger && echo 00000000andrew00 10000>P:\sciledger\transaction0.txt && goto node)
-if not exist "P:\sciledger\transaction0.txt" ( echo 00000000andrew00 10000>P:\sciledger\transaction0.txt && goto node)
+if not exist "P:\sciledger\" ( mkdir P:\sciledger && echo 00000000andrew4b 10000>P:\sciledger\transaction0.txt && goto node)
+if not exist "P:\sciledger\transaction0.txt" ( echo 00000000andrew4b 10000>P:\sciledger\transaction0.txt && goto node)
 if exist "P:\sciledger\transaction%point%.txt" ( set /p transaction=<P:\sciledger\transaction%point%.txt ) else ( timeout %waittime% && goto node)
 
 if %transaction:~17% LEQ 0 ( del /Q "P:\sciledger\transaction%point%.*" && goto renode )
