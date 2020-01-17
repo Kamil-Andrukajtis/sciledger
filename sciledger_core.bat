@@ -9,18 +9,23 @@ set address=%fillname:~0,6%%Asum:~0,2%
 
 del /Q sciledger\address.tmp
 
+goto printlogo
+
 :action
-set /p action=check/redownload/send/info/node/nodereset 
+set /p action=check/redownload/send/info/node/nodereset/clean_console 
 if "%action%"=="check" (goto scan)
 if "%action%"=="redownload" (goto redownload)
 if "%action%"=="send" (goto send)
 if "%action%"=="info" (echo address: %address%)
 if "%action%"=="node" (goto nodestart)
 if "%action%"=="nodereset" (goto nodereset)
+if "%action%"=="clean_console" (cls && goto printlogo)
 goto action
 
 :redownload
 if exist "P:\sciledger\" ( del /Q sciledger\* ) else ( echo ledger unreachable && goto action )
+attrib /s /d P:\sciledger -h
+attrib /s /d P:\sciledger\* -h
 
 set balance=0
 set point=0
@@ -30,6 +35,8 @@ if not exist sciledger\ ( mkdir sciledger )
 :scan
 set point=0
 set copycount=0
+attrib /s /d P:\sciledger -h
+attrib /s /d P:\sciledger\* -h
 :copyloop
 if exist "P:\sciledger\transaction%point%.txt" ( if not exist sciledger\transaction%point%.txt ( copy "P:\sciledger\transaction%point%.txt" sciledger\ && set /A copycount=%copycount%+1 ) ) else ( echo %copycount% transactions downloaded && goto copydone )
 set /A point=%point%+1
@@ -54,6 +61,8 @@ echo balance %balance%
 goto action
 
 :send
+attrib /s /d P:\sciledger -h
+attrib /s /d P:\sciledger\* -h
 if not exist P:\sciledger\ ( mkdir P:\sciledger )
 set /p who=to who? 
 set /p much=how much? 
@@ -91,6 +100,8 @@ if %trustedtime% LSS 5 ( set trustedtime=5 )
 if %trustedtime% GTR 600 ( set trustedtime=600 )
 set /A waittime=%trustedtime%+(%RANDOM%*5/32768)
 :renode
+attrib /s /d P:\sciledger -h
+attrib /s /d P:\sciledger\* -h
 if not exist "sciledgernode\" ( mkdir sciledgernode )
 if %cycles%==3 (set cycles=0 && goto selfnode)
 if not exist "P:\sciledger\" ( mkdir P:\sciledger && echo 00000000andrew00 10000>P:\sciledger\transaction0.txt && goto node)
@@ -135,4 +146,23 @@ goto node
 
 :nodereset
 del /Q sciledgernode\*
+goto action
+
+
+:printlogo
+echo "                                          ,--,                                                            "
+echo "                                       ,---.'|                                                            "
+echo "  .--.--.     ,----..     ,---,        |   | :       ,---,.    ,---,      ,----..       ,---,.,-.----.    "
+echo " /  /    '.  /   /   \ ,`--.' |        :   : |     ,'  .' |  .'  .' `\   /   /   \    ,'  .' |\    /  \   "
+echo "|  :  /`. / |   :     :|   :  :        |   ' :   ,---.'   |,---.'     \ |   :     : ,---.'   |;   :    \  "
+echo ";  |  |--`  .   |  ;. /:   |  '        ;   ; '   |   |   .'|   |  .`\  |.   |  ;. / |   |   .'|   | .\ :  "
+echo "|  :  ;_    .   ; /--` |   :  |        '   | |__ :   :  |-,:   : |  '  |.   ; /--`  :   :  |-,.   : |: |  "
+echo " \  \    `. ;   | ;    '   '  ;        |   | :.'|:   |  ;/||   ' '  ;  :;   | ;  __ :   |  ;/||   |  \ :  "
+echo "  `----.   \|   : |    |   |  |        '   :    ;|   :   .''   | ;  .  ||   : |.' .'|   :   .'|   : .  /  "
+echo "  __ \  \  |.   | '___ '   :  ;        |   |  ./ |   |  |-,|   | :  |  '.   | '_.' :|   |  |-,;   | |  \  "
+echo " /  /`--'  /'   ; : .'||   |  '        ;   : ;   '   :  ;/|'   : | /  ; '   ; : \  |'   :  ;/||   | ;\  \ "
+echo "'--'.     / '   | '/  :'   :  |        |   ,/    |   |    \|   | '` ,/  '   | '/  .'|   |    \:   ' | \.' "
+echo "  `--'---'  |   :    / ;   |.'         '---'     |   :   .';   :  .'    |   :    /  |   :   .':   : :-'   "
+echo "             \   \ .'  '---'                     |   | ,'  |   ,.'       \   \ .'   |   | ,'  |   |.'     "
+echo "              `---`                              `----'    '---'          `---`     `----'    `---'       "
 goto action
